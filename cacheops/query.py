@@ -376,7 +376,12 @@ class ManagerMixin(object):
             self._install_cacheops(cls)
 
     def _pre_save(self, sender, instance, **kwargs):
-        if instance.pk is not None and not no_invalidation.active:
+        # NOTE: it's possible for this to be a subclass, e.g. proxy, without cacheprofile,
+        #       but its base having one. Or vice versa.
+        cacheprofile = model_profile(instance.__class__)
+        no_invalidation_on_save = cacheprofile.get('no_invalidation_on_save') if cacheprofile else False
+
+        if instance.pk is not None and not (no_invalidation.active or no_invalidation_on_save):
             try:
                 _old_objs.__dict__[sender, instance.pk] = sender.objects.get(pk=instance.pk)
             except sender.DoesNotExist:

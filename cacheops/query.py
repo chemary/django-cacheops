@@ -415,12 +415,13 @@ class ManagerMixin(object):
             for k in unwanted_dict:
                 del instance.__dict__[k]
 
-            key = 'pk' if cache_on_save is True else cache_on_save
-            cond = {key: getattr(instance, key)}
-            qs = sender.objects.inplace().filter(**cond).order_by()
-            if MAX_GET_RESULTS:
-                qs = qs[:MAX_GET_RESULTS + 1]
-            qs._cache_results(qs._cache_key(), [instance])
+            keys = ['pk'] if cache_on_save is True else cache_on_save
+            for key in keys:
+                cond = {key: getattr(instance, key)}
+                qs = sender.objects.inplace().filter(**cond).order_by()
+                if MAX_GET_RESULTS:
+                    qs = qs[:MAX_GET_RESULTS + 1]
+                qs._cache_results(qs._cache_key(), [instance])
 
             # Reverting stripped attributes
             instance.__dict__.update(unwanted_dict)
